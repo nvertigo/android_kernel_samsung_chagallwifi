@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -83,38 +83,16 @@ void test_iosched_mark_test_completion(void)
 }
 EXPORT_SYMBOL(test_iosched_mark_test_completion);
 
-/**
- *  check_test_completion() - Check if all the queued test
- *  requests were completed
- */
-void check_test_completion(void)
+/* Check if all the queued test requests were completed */
+static void check_test_completion(void)
 {
 	struct test_request *test_rq;
 	struct request *rq;
 
-<<<<<<< HEAD
 	list_for_each_entry(test_rq, &ptd->test_queue, queuelist) {
 		rq = test_rq->rq;
 		if (!test_rq->req_completed)
 			return;
-=======
-	if (!ptd)
-		goto exit;
-
-	list_for_each_entry(test_rq, &ptd->dispatched_queue, queuelist)
-		if (!test_rq->req_completed)
-			goto exit;
-
-	if (!list_empty(&ptd->test_queue)
-			|| !list_empty(&ptd->reinsert_queue)
-			|| !list_empty(&ptd->urgent_queue)) {
-		test_pr_info("%s: Test still not completed,", __func__);
-		test_pr_info("%s: test_count=%d, reinsert_count=%d",
-			     __func__, ptd->test_count, ptd->reinsert_count);
-		test_pr_info("%s: dispatched_count=%d, urgent_count=%d",
-			    __func__, ptd->dispatched_count, ptd->urgent_count);
-		goto exit;
->>>>>>> fd08cb5... mmc: enhance long_sequential_test for higher throughput
 	}
 
 	ptd->test_info.test_duration = jiffies -
@@ -123,11 +101,7 @@ void check_test_completion(void)
 	test_pr_info("%s: Test is completed", __func__);
 
 	test_iosched_mark_test_completion();
-
-exit:
-	return;
 }
-EXPORT_SYMBOL(check_test_completion);
 
 /*
  * A callback to be called per bio completion.
@@ -367,10 +341,6 @@ int test_iosched_add_wr_rd_test_req(int is_err_expcted,
 		rq->end_io = end_test_req;
 	rq->__sector = start_sec;
 	rq->cmd_type |= REQ_TYPE_FS;
-<<<<<<< HEAD
-=======
-	rq->cmd_flags |= REQ_SORTED;
->>>>>>> fd08cb5... mmc: enhance long_sequential_test for higher throughput
 
 	if (rq->bio) {
 		rq->bio->bi_sector = start_sec;
@@ -624,8 +594,6 @@ static unsigned int get_timeout_msec(struct test_data *td)
 
 /**
  * test_iosched_start_test() - Prepares and runs the test.
- * The members test_duration and test_byte_count of the input
- * parameter t_info are modified by this function.
  * @t_info:	the current test testcase and callbacks
  *		functions
  *
@@ -715,7 +683,6 @@ int test_iosched_start_test(struct test_info *t_info)
 
 		wait_event(ptd->wait_q, ptd->test_state == TEST_COMPLETED);
 		t_info->test_duration = ptd->test_info.test_duration;
-		t_info->test_byte_count = ptd->test_info.test_byte_count;
 		del_timer_sync(&ptd->timeout_timer);
 
 		ret = check_test_result(ptd);
@@ -919,49 +886,6 @@ static void test_merged_requests(struct request_queue *q,
 {
 	list_del_init(&next->queuelist);
 }
-<<<<<<< HEAD
-=======
-/*
- * test_dispatch_from(): Dispatch request from @queue to the @dispatched_queue.
- * Also update th dispatched_count counter.
- */
-static int test_dispatch_from(struct request_queue *q,
-		struct list_head *queue, unsigned int *count)
-{
-	struct test_request *test_rq;
-	struct request *rq;
-	int ret = 0;
-
-	if (!ptd)
-		goto err;
-
-	spin_lock_irq(&ptd->lock);
-	if (!list_empty(queue)) {
-		test_rq = list_entry(queue->next, struct test_request,
-				queuelist);
-		rq = test_rq->rq;
-		if (!rq) {
-			pr_err("%s: null request,return", __func__);
-			spin_unlock_irq(&ptd->lock);
-			goto err;
-		}
-		list_move_tail(&test_rq->queuelist, &ptd->dispatched_queue);
-		ptd->dispatched_count++;
-		(*count)--;
-		spin_unlock_irq(&ptd->lock);
-
-		print_req(rq);
-		elv_dispatch_sort(q, rq);
-		ptd->test_info.test_byte_count += test_rq->buf_size;
-		ret = 1;
-		goto err;
-	}
-	spin_unlock_irq(&ptd->lock);
-
-err:
-	return ret;
-}
->>>>>>> fd08cb5... mmc: enhance long_sequential_test for higher throughput
 
 /*
  * Dispatch a test request in case there is a running test Otherwise, dispatch
