@@ -1517,8 +1517,8 @@ static int s6tnmr7_fb_notifier_callback(struct notifier_block *self,
 			break;
 		case FB_BLANK_UNBLANK:
 			s6tnmr7_ldi_enable(lcd);
-			update_brightness(lcd, 0);
 			lcd->fb_unblank = 1;
+			update_brightness(lcd, 0);
 			break;
 		default:
 			break;
